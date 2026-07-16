@@ -20,16 +20,62 @@ const state = {
   refFile: null,
 };
 
+/* ---------------- theme ---------------- */
+const THEME_KEY = "mps-theme";
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem(THEME_KEY, theme);
+}
+(function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  const theme = saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  applyTheme(theme);
+})();
+$("#themeToggle").onclick = () =>
+  applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+
 /* ---------------- tabs ---------------- */
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+function moveNavIndicator(btn) {
+  const ind = $("#navIndicator");
+  const navRect = btn.parentElement.getBoundingClientRect();
+  const r = btn.getBoundingClientRect();
+  ind.style.width = r.width + "px";
+  ind.style.transform = `translateX(${r.left - navRect.left}px)`;
+}
+window.addEventListener("resize", () => {
+  const active = document.querySelector("nav button.active");
+  if (active) moveNavIndicator(active);
+});
+
 function showTab(t) {
+  const changed = state.tab !== t;
   state.tab = t;
-  document.querySelectorAll("nav button").forEach(b =>
-    b.classList.toggle("active", b.dataset.tab === t));
-  for (const s of ["photos", "faces", "settings"])
-    $("#tab-" + s).style.display = s === t ? "" : "none";
+  document.querySelectorAll("nav button").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === t);
+    if (b.dataset.tab === t) moveNavIndicator(b);
+  });
+  for (const s of ["photos", "faces", "settings", "about"]) {
+    const el = $("#tab-" + s);
+    if (s === t) {
+      el.classList.add("active");
+      if (changed) {
+        el.classList.remove("view-in");
+        void el.offsetWidth; // restart animation
+        el.classList.add("view-in");
+      }
+    } else {
+      el.classList.remove("active", "view-in");
+    }
+  }
   if (t === "faces") pollIndex();
 }
+// position the indicator once layout/fonts have settled
+requestAnimationFrame(() => {
+  const active = document.querySelector("nav button.active");
+  if (active) moveNavIndicator(active);
+});
 
 /* ---------------- settings ---------------- */
 async function loadSettings() {

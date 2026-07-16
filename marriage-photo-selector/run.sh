@@ -7,5 +7,5 @@ if [ ! -d ".venv" ]; then
   ./.venv/bin/pip install --upgrade pip -q
   ./.venv/bin/pip install -r requirements.txt
 fi
-open -g "http://127.0.0.1:8756" 2>/dev/null || true
+open -g "http://127.0.0.1:8759" 2>/dev/null || true
 exec ./.venv/bin/python app.py
