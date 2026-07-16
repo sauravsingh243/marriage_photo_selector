@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marriage Photo Selector</title>
+<style>
+:root{
+  --bg:#14110E; --surface:#1E1A15; --raise:#26211A; --line:#2E2820;
+  --text:#EFE8DC; --muted:#9B9083;
+  --gold:#D9A441; --gold-ink:#2A1F08;
+  --reject:#C05B45; --ok:#7FA65A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);
+  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button{font:inherit;cursor:pointer}
+
+/* ---------- top bar ---------- */
+header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,black);
+  border-bottom:1px solid var(--line);padding:0 20px;display:flex;align-items:center;gap:22px}
+.wordmark{font-family:Palatino,"Palatino Linotype",Georgia,serif;font-style:italic;
+  font-size:19px;letter-spacing:.02em;color:var(--gold);padding:14px 0;white-space:nowrap}
+nav{display:flex;gap:4px;height:100%}
+nav button{background:none;border:none;color:var(--muted);padding:16px 14px;
+  border-bottom:2px solid transparent;font-size:14px}
+nav button.active{color:var(--text);border-bottom-color:var(--gold)}
+.counts{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px}
+.counts b{color:var(--gold);font-weight:600}
+
+#banner{display:none;background:#3A2318;color:#F2C9A8;border-bottom:1px solid #57351F;
+  padding:9px 20px;font-size:13px}
+#banner.show{display:block}
+#banner a{color:var(--gold);cursor:pointer;text-decoration:underline}
+
+main{padding:18px 20px 90px;max-width:1500px;margin:0 auto}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.chip{background:var(--surface);border:1px solid var(--line);color:var(--muted);
+  border-radius:99px;padding:6px 13px;font-size:13px}
+.chip.active{color:var(--gold-ink);background:var(--gold);border-color:var(--gold);font-weight:600}
+.btn{background:var(--raise);border:1px solid var(--line);color:var(--text);
+  border-radius:8px;padding:7px 13px}
+.btn:hover{border-color:var(--muted)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:var(--gold-ink);font-weight:600}
+.spacer{flex:1}
+.hint{color:var(--muted);font-size:12.5px}
+
+/* ---------- photo grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+.card{position:relative;aspect-ratio:1;background:var(--surface);border-radius:10px;
+  overflow:hidden;border:1px solid var(--line)}
+.card img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;
+  opacity:0;transition:opacity .25s}
+.card img.ready{opacity:1}
+.card.selected{border-color:var(--gold)}
+.card.rejected{border-color:#6b3527}
+.card.rejected img{filter:grayscale(.7) brightness(.65)}
+.tag{position:absolute;top:8px;left:8px;font-size:11px;font-weight:600;letter-spacing:.03em;
+  padding:3px 8px;border-radius:6px;pointer-events:none}
+.tag.selected{background:var(--gold);color:var(--gold-ink)}
+.tag.rejected{background:var(--reject);color:#fff}
+.tag.none{display:none}
+.score{position:absolute;top:8px;right:8px;font-size:11px;background:rgba(0,0,0,.55);
+  color:#fff;padding:3px 7px;border-radius:6px;font-variant-numeric:tabular-nums}
+.acts{position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;padding:8px;
+  background:linear-gradient(transparent,rgba(0,0,0,.75));opacity:0;transition:opacity .15s}
+.card:hover .acts{opacity:1}
+.acts button{flex:1;border:none;border-radius:7px;padding:6px 0;font-size:12.5px;font-weight:600;
+  background:rgba(255,255,255,.14);color:#fff;backdrop-filter:blur(3px)}
+.acts .a-sel{background:var(--gold);color:var(--gold-ink)}
+.acts .a-rej{background:var(--reject)}
+#sentinel{height:1px}
+.empty{color:var(--muted);text-align:center;padding:70px 0;font-size:15px}
+
+/* ---------- faces ---------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:18px;margin-bottom:18px}
+.panel h2{margin:0 0 4px;font-size:15px}
+.panel p{margin:4px 0 12px;color:var(--muted);font-size:13px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bar{height:6px;background:var(--raise);border-radius:99px;overflow:hidden;flex:1;min-width:160px}
+.bar i{display:block;height:100%;background:var(--gold);width:0%;transition:width .4s}
+input[type=range]{accent-color:var(--gold)}
+#drop{border:1.5px dashed var(--line);border-radius:12px;padding:26px;text-align:center;
+  color:var(--muted);cursor:pointer}
+#drop.over{border-color:var(--gold);color:var(--gold)}
+#refPreview{max-height:110px;border-radius:10px;display:none;margin-top:10px}
+
+/* ---------- settings ---------- */
+.field{margin-bottom:16px;max-width:640px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+  border-radius:8px;padding:10px 12px;font-size:13.5px;font-family:ui-monospace,Menlo,monospace}
+.field input:focus{outline:none;border-color:var(--gold)}
+.err{color:#E58A6F;font-size:12.5px;margin-top:5px;min-height:16px}
+.pathstate{font-size:12px;margin-top:5px}
+.pathstate.ok{color:var(--ok)} .pathstate.bad{color:#E58A6F}
+
+/* ---------- lightbox ---------- */
+#lb{position:fixed;inset:0;background:rgba(10,8,6,.94);display:none;z-index:50;
+  flex-direction:column}
+#lb.open{display:flex}
+#lb .top{display:flex;align-items:center;gap:14px;padding:12px 18px;color:var(--muted);font-size:13px}
+#lb img{flex:1;object-fit:contain;min-height:0;margin:0 18px}
+#lb .keys{display:flex;gap:16px;justify-content:center;padding:14px;color:var(--muted);font-size:12.5px}
+kbd{background:var(--raise);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:1px 7px;font-family:inherit;color:var(--text)}
+#lbTag{font-weight:600}
+#lbTag.selected{color:var(--gold)} #lbTag.rejected{color:var(--reject)}
+
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--raise);
+  border:1px solid var(--line);border-radius:10px;padding:10px 18px;font-size:13.5px;
+  opacity:0;transition:opacity .25s;pointer-events:none;z-index:60}
+#toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Marriage Photo Selector</div>
+  <nav>
+    <button data-tab="photos" class="active">Photos</button>
+    <button data-tab="faces">Find a person</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+  <div class="counts" id="counts"></div>
+</header>
+<div id="banner"></div>
+
+<main>
+  <!-- ================= PHOTOS ================= -->
+  <section id="tab-photos">
+    <div class="toolbar">
+      <button class="chip active" data-filter="all">All</button>
+      <button class="chip" data-filter="selected">Selected</button>
+      <button class="chip" data-filter="rejected">Not selected</button>
+      <button class="chip" data-filter="none">No action</button>
+      <span class="spacer"></span>
+      <span class="hint">Hover a photo to tag it · click to open</span>
+      <button class="btn" id="rescan">Re-scan folder</button>
+      <button class="btn gold" id="export">Copy selected → folder</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="gridEmpty" style="display:none"></div>
+    <div id="sentinel"></div>
+  </section>
+
+  <!-- ================= FACES ================= -->
+  <section id="tab-faces" style="display:none">
+    <div class="panel">
+      <h2>1 · Build the face index</h2>
+      <p>Scans every photo once for faces, on your machine. You can pause anytime; it resumes where it left off. New photos only need the new ones scanned.</p>
+      <div class="row">
+        <button class="btn gold" id="idxStart">Start indexing</button>
+        <button class="btn" id="idxStop" style="display:none">Pause</button>
+        <div class="bar"><i id="idxBar"></i></div>
+        <span class="hint" id="idxText"></span>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>2 · Find every photo of a person</h2>
+      <p>Drop one clear photo of the person (a phone selfie works). Matching runs locally; nothing leaves your Mac.</p>
+      <div id="drop">Drop a reference photo here, or click to choose</div>
+      <input type="file" id="refFile" accept="image/*" hidden>
+      <img id="refPreview" alt="Reference face">
+      <div class="row" style="margin-top:12px">
+        <label class="hint">Strictness</label>
+        <input type="range" id="thresh" min="0.25" max="0.55" step="0.01" value="0.35">
+        <span class="hint" id="threshVal">0.35</span>
+        <button class="btn" id="reSearch" style="display:none">Search again</button>
+      </div>
+    </div>
+    <div class="toolbar" id="faceTools" style="display:none">
+      <span class="hint" id="faceCount"></span>
+      <span class="spacer"></span>
+      <button class="btn" id="selAllMatches">Select all matches</button>
+    </div>
+    <div class="grid" id="faceGrid"></div>
+    <div class="empty" id="faceEmpty" style="display:none"></div>
+  </section>
+
+  <!-- ================= SETTINGS ================= -->
+  <section id="tab-settings" style="display:none">
+    <div class="panel">
+      <h2>Folders</h2>
+      <p id="firstRunNote" style="display:none">Welcome! Before anything else, tell the tool where your photos live and where selected photos should be copied.</p>
+      <div class="field">
+        <label for="inPhotos">Photos folder (all wedding photos, subfolders included)</label>
+        <input id="inPhotos" placeholder="/Users/you/Pictures/Wedding" spellcheck="false">
+        <div class="pathstate" id="stPhotos"></div>
+        <div class="err" id="errPhotos"></div>
+      </div>
+      <div class="field">
+        <label for="inSelected">Selected-photos folder (created if it doesn't exist)</label>
+        <input id="inSelected" placeholder="/Users/you/Pictures/Wedding-Selected" spellcheck="false">
+        <div class="pathstate" id="stSelected"></div>
+        <div class="err" id="errSelected"></div>
+      </div>
+      <button class="btn gold" id="saveSettings">Save folders</button>
+      <span class="hint" id="heicNote" style="margin-left:12px"></span>
+    </div>
+  </section>
+</main>
+
+<!-- lightbox -->
+<div id="lb">
+  <div class="top">
+    <span id="lbName"></span><span id="lbTag"></span>
+    <span class="spacer" style="flex:1"></span>
+    <button class="btn" id="lbClose">Close (Esc)</button>
+  </div>
+  <img id="lbImg" alt="">
+  <div class="keys">
+    <span><kbd>S</kbd> select</span><span><kbd>X</kbd> not selected</span>
+    <span><kbd>U</kbd> clear</span><span><kbd>←</kbd><kbd>→</kbd> move</span>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

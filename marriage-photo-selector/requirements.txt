@@ -1,0 +1,11 @@
+# core
+fastapi
+uvicorn
+pillow
+pillow-heif
+python-multipart
+numpy
+
+# face search (optional — the app runs without these, minus face features)
+insightface
+onnxruntime
