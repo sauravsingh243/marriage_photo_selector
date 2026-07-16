@@ -12,7 +12,7 @@ chmod +x run.sh
 ./run.sh
 ```
 
-The first run creates a virtual environment and installs dependencies (the face-recognition model, ~300 MB, downloads automatically the first time you index). Then it opens http://127.0.0.1:8756 in your browser.
+The first run creates a virtual environment and installs dependencies (the face-recognition model, ~300 MB, downloads automatically the first time you index). Then it opens http://127.0.0.1:8759 in your browser.
 
 Every later launch is just `./run.sh` again.
 
