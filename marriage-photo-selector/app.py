@@ -390,5 +390,5 @@ def index():
     return HTMLResponse((Path(__file__).parent / "static" / "index.html").read_text())
 
 if __name__ == "__main__":
-    print("\n  Marriage Photo Selector  ->  http://127.0.0.1:8756\n")
-    uvicorn.run(app, host="127.0.0.1", port=8756, log_level="warning")
+    print("\n  Marriage Photo Selector  ->  http://127.0.0.1:8759\n")
+    uvicorn.run(app, host="127.0.0.1", port=8759, log_level="warning")

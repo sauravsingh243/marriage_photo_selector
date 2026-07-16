@@ -6,42 +6,98 @@
 <title>Marriage Photo Selector</title>
 <style>
 :root{
-  --bg:#14110E; --surface:#1E1A15; --raise:#26211A; --line:#2E2820;
+  --bg:#14110E;
+  --blob-1: rgba(217,164,65,.20); --blob-2: rgba(127,166,90,.14); --blob-3: rgba(192,91,69,.14);
+  --surface: rgba(255,255,255,.05); --raise: rgba(255,255,255,.08); --line: rgba(255,255,255,.10);
   --text:#EFE8DC; --muted:#9B9083;
   --gold:#D9A441; --gold-ink:#2A1F08;
   --reject:#C05B45; --ok:#7FA65A;
+  --blur:18px;
+  --shadow:0 8px 30px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+:root[data-theme="light"]{
+  --bg:#EFEAE1;
+  --blob-1: rgba(217,164,65,.28); --blob-2: rgba(127,166,90,.18); --blob-3: rgba(192,91,69,.16);
+  --surface: rgba(255,255,255,.55); --raise: rgba(255,255,255,.72); --line: rgba(30,24,16,.10);
+  --text:#2B2317; --muted:#7C7263;
+  --gold:#B87A1E; --gold-ink:#FFFCF6;
+  --reject:#AE3D24; --ok:#3E7A2C;
+  --shadow:0 8px 30px rgba(60,45,20,.14);
+  color-scheme: light;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--text);
-  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  transition:background-color .4s ease, color .4s ease}
+body::before{
+  content:"";position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(38% 30% at 12% 15%, var(--blob-1), transparent 65%),
+    radial-gradient(32% 26% at 88% 10%, var(--blob-2), transparent 65%),
+    radial-gradient(46% 38% at 65% 92%, var(--blob-3), transparent 65%);
+  filter:blur(60px);
+  transition:background .4s ease;
+}
 button{font:inherit;cursor:pointer}
+*{transition:background-color .25s ease, border-color .25s ease}
+
+/* ---------- glass helpers ---------- */
+.glass{background:var(--surface);backdrop-filter:blur(var(--blur)) saturate(160%);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(160%);
+  border:1px solid var(--line);box-shadow:var(--shadow)}
 
 /* ---------- top bar ---------- */
-header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,black);
-  border-bottom:1px solid var(--line);padding:0 20px;display:flex;align-items:center;gap:22px}
+header{position:sticky;top:0;z-index:20;padding:0 20px;display:flex;align-items:center;gap:22px;
+  background:var(--surface);backdrop-filter:blur(var(--blur)) saturate(160%);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(160%);
+  border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
 .wordmark{font-family:Palatino,"Palatino Linotype",Georgia,serif;font-style:italic;
   font-size:19px;letter-spacing:.02em;color:var(--gold);padding:14px 0;white-space:nowrap}
-nav{display:flex;gap:4px;height:100%}
+nav{position:relative;display:flex;gap:4px;height:100%}
 nav button{background:none;border:none;color:var(--muted);padding:16px 14px;
-  border-bottom:2px solid transparent;font-size:14px}
-nav button.active{color:var(--text);border-bottom-color:var(--gold)}
+  border-bottom:2px solid transparent;font-size:14px;transition:color .2s ease}
+nav button.active{color:var(--text)}
+.nav-indicator{position:absolute;bottom:0;height:2px;background:var(--gold);border-radius:2px;
+  transition:transform .35s cubic-bezier(.16,1,.3,1), width .35s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 0 8px color-mix(in srgb, var(--gold) 60%, transparent)}
 .counts{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px}
 .counts b{color:var(--gold);font-weight:600}
 
-#banner{display:none;background:#3A2318;color:#F2C9A8;border-bottom:1px solid #57351F;
+.theme-toggle{width:36px;height:36px;border-radius:50%;flex:none;
+  background:var(--raise);border:1px solid var(--line);color:var(--text);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .4s cubic-bezier(.16,1,.3,1), background-color .25s ease}
+.theme-toggle:hover{transform:rotate(15deg) scale(1.08)}
+.theme-toggle svg{width:17px;height:17px}
+.theme-toggle .moon{display:none}
+:root[data-theme="light"] .theme-toggle .sun{display:none}
+:root[data-theme="light"] .theme-toggle .moon{display:block}
+
+#banner{display:none;background:color-mix(in srgb, var(--reject) 25%, var(--surface));color:var(--text);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(var(--blur));
   padding:9px 20px;font-size:13px}
 #banner.show{display:block}
 #banner a{color:var(--gold);cursor:pointer;text-decoration:underline}
 
 main{padding:18px 20px 90px;max-width:1500px;margin:0 auto}
+main section{display:none}
+main section.active{display:block}
+main section.view-in{animation:viewIn .38s cubic-bezier(.16,1,.3,1)}
+@keyframes viewIn{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media (prefers-reduced-motion:reduce){main section.view-in{animation:none}}
+
 .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-.chip{background:var(--surface);border:1px solid var(--line);color:var(--muted);
-  border-radius:99px;padding:6px 13px;font-size:13px}
+.chip{background:var(--surface);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));
+  border:1px solid var(--line);color:var(--muted);
+  border-radius:99px;padding:6px 13px;font-size:13px;transition:background-color .2s ease,color .2s ease,border-color .2s ease,transform .15s ease}
+.chip:hover{transform:translateY(-1px)}
 .chip.active{color:var(--gold-ink);background:var(--gold);border-color:var(--gold);font-weight:600}
-.btn{background:var(--raise);border:1px solid var(--line);color:var(--text);
-  border-radius:8px;padding:7px 13px}
-.btn:hover{border-color:var(--muted)}
+.btn{background:var(--raise);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));
+  border:1px solid var(--line);color:var(--text);
+  border-radius:8px;padding:7px 13px;transition:border-color .2s ease,transform .15s ease}
+.btn:hover{border-color:var(--muted);transform:translateY(-1px)}
 .btn.gold{background:var(--gold);border-color:var(--gold);color:var(--gold-ink);font-weight:600}
 .spacer{flex:1}
 .hint{color:var(--muted);font-size:12.5px}
@@ -49,7 +105,9 @@ main{padding:18px 20px 90px;max-width:1500px;margin:0 auto}
 /* ---------- photo grid ---------- */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
 .card{position:relative;aspect-ratio:1;background:var(--surface);border-radius:10px;
-  overflow:hidden;border:1px solid var(--line)}
+  overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);
+  transition:border-color .2s ease,transform .2s cubic-bezier(.16,1,.3,1)}
+.card:hover{transform:translateY(-2px)}
 .card img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;
   opacity:0;transition:opacity .25s}
 .card img.ready{opacity:1}
@@ -57,12 +115,12 @@ main{padding:18px 20px 90px;max-width:1500px;margin:0 auto}
 .card.rejected{border-color:#6b3527}
 .card.rejected img{filter:grayscale(.7) brightness(.65)}
 .tag{position:absolute;top:8px;left:8px;font-size:11px;font-weight:600;letter-spacing:.03em;
-  padding:3px 8px;border-radius:6px;pointer-events:none}
-.tag.selected{background:var(--gold);color:var(--gold-ink)}
-.tag.rejected{background:var(--reject);color:#fff}
+  padding:3px 8px;border-radius:6px;pointer-events:none;backdrop-filter:blur(6px)}
+.tag.selected{background:color-mix(in srgb, var(--gold) 88%, transparent);color:var(--gold-ink)}
+.tag.rejected{background:color-mix(in srgb, var(--reject) 82%, transparent);color:#fff}
 .tag.none{display:none}
 .score{position:absolute;top:8px;right:8px;font-size:11px;background:rgba(0,0,0,.55);
-  color:#fff;padding:3px 7px;border-radius:6px;font-variant-numeric:tabular-nums}
+  color:#fff;padding:3px 7px;border-radius:6px;font-variant-numeric:tabular-nums;backdrop-filter:blur(6px)}
 .acts{position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;padding:8px;
   background:linear-gradient(transparent,rgba(0,0,0,.75));opacity:0;transition:opacity .15s}
 .card:hover .acts{opacity:1}
@@ -74,7 +132,9 @@ main{padding:18px 20px 90px;max-width:1500px;margin:0 auto}
 .empty{color:var(--muted);text-align:center;padding:70px 0;font-size:15px}
 
 /* ---------- faces ---------- */
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+.panel{background:var(--surface);backdrop-filter:blur(var(--blur)) saturate(160%);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(160%);
+  border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
   padding:18px;margin-bottom:18px}
 .panel h2{margin:0 0 4px;font-size:15px}
 .panel p{margin:4px 0 12px;color:var(--muted);font-size:13px}
@@ -83,37 +143,57 @@ main{padding:18px 20px 90px;max-width:1500px;margin:0 auto}
 .bar i{display:block;height:100%;background:var(--gold);width:0%;transition:width .4s}
 input[type=range]{accent-color:var(--gold)}
 #drop{border:1.5px dashed var(--line);border-radius:12px;padding:26px;text-align:center;
-  color:var(--muted);cursor:pointer}
+  color:var(--muted);cursor:pointer;transition:border-color .2s ease,color .2s ease}
 #drop.over{border-color:var(--gold);color:var(--gold)}
 #refPreview{max-height:110px;border-radius:10px;display:none;margin-top:10px}
 
 /* ---------- settings ---------- */
 .field{margin-bottom:16px;max-width:640px}
 .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-.field input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+.field input{width:100%;background:var(--raise);border:1px solid var(--line);color:var(--text);
   border-radius:8px;padding:10px 12px;font-size:13.5px;font-family:ui-monospace,Menlo,monospace}
 .field input:focus{outline:none;border-color:var(--gold)}
 .err{color:#E58A6F;font-size:12.5px;margin-top:5px;min-height:16px}
 .pathstate{font-size:12px;margin-top:5px}
 .pathstate.ok{color:var(--ok)} .pathstate.bad{color:#E58A6F}
 
+/* ---------- about ---------- */
+.about-panel{display:flex;gap:32px;align-items:center;flex-wrap:wrap}
+.about-photo{flex:0 0 260px;width:260px;aspect-ratio:3/4.6;border-radius:14px;overflow:hidden;
+  border:1px solid var(--line);box-shadow:var(--shadow)}
+.about-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.about-info{flex:1;min-width:240px}
+.about-info h2{margin:0 0 6px;font-size:22px;font-family:Palatino,"Palatino Linotype",Georgia,serif;
+  font-style:italic;color:var(--gold)}
+.about-info>p{margin:0 0 18px;color:var(--muted);font-size:13.5px}
+.about-links{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-direction:column;gap:10px}
+.about-links a{display:inline-flex;align-items:center;gap:10px;color:var(--text);
+  text-decoration:none;font-size:13.5px;padding:9px 13px;border-radius:9px;
+  background:var(--raise);border:1px solid var(--line);width:fit-content;
+  transition:border-color .2s ease,transform .15s ease}
+.about-links a:hover{border-color:var(--gold);transform:translateX(3px)}
+.about-links svg{width:16px;height:16px;flex:none;color:var(--gold)}
+.about-footer{margin:0;color:var(--muted);font-size:12.5px;font-style:italic}
+
 /* ---------- lightbox ---------- */
-#lb{position:fixed;inset:0;background:rgba(10,8,6,.94);display:none;z-index:50;
-  flex-direction:column}
-#lb.open{display:flex}
+#lb{position:fixed;inset:0;background:rgba(10,8,6,.72);backdrop-filter:blur(24px) saturate(140%);
+  -webkit-backdrop-filter:blur(24px) saturate(140%);display:none;z-index:50;
+  flex-direction:column;opacity:0;transition:opacity .2s ease}
+#lb.open{display:flex;opacity:1}
 #lb .top{display:flex;align-items:center;gap:14px;padding:12px 18px;color:var(--muted);font-size:13px}
-#lb img{flex:1;object-fit:contain;min-height:0;margin:0 18px}
+#lb img{flex:1;object-fit:contain;min-height:0;margin:0 18px;border-radius:8px}
 #lb .keys{display:flex;gap:16px;justify-content:center;padding:14px;color:var(--muted);font-size:12.5px}
 kbd{background:var(--raise);border:1px solid var(--line);border-bottom-width:2px;
   border-radius:5px;padding:1px 7px;font-family:inherit;color:var(--text)}
 #lbTag{font-weight:600}
 #lbTag.selected{color:var(--gold)} #lbTag.rejected{color:var(--reject)}
 
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--raise);
-  border:1px solid var(--line);border-radius:10px;padding:10px 18px;font-size:13.5px;
-  opacity:0;transition:opacity .25s;pointer-events:none;z-index:60}
-#toast.show{opacity:1}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(0);background:var(--surface);
+  backdrop-filter:blur(var(--blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--blur)) saturate(160%);
+  border:1px solid var(--line);box-shadow:var(--shadow);border-radius:10px;padding:10px 18px;font-size:13.5px;
+  opacity:0;transition:opacity .25s ease, transform .25s ease;pointer-events:none;z-index:60}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -124,14 +204,20 @@ kbd{background:var(--raise);border:1px solid var(--line);border-bottom-width:2px
     <button data-tab="photos" class="active">Photos</button>
     <button data-tab="faces">Find a person</button>
     <button data-tab="settings">Settings</button>
+    <button data-tab="about">About</button>
+    <span class="nav-indicator" id="navIndicator"></span>
   </nav>
   <div class="counts" id="counts"></div>
+  <button class="theme-toggle" id="themeToggle" title="Toggle light / dark" aria-label="Toggle light / dark theme">
+    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+    <svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 14.5a8.5 8.5 0 0 1-11-11 8.5 8.5 0 1 0 11 11Z"/></svg>
+  </button>
 </header>
 <div id="banner"></div>
 
 <main>
   <!-- ================= PHOTOS ================= -->
-  <section id="tab-photos">
+  <section id="tab-photos" class="active">
     <div class="toolbar">
       <button class="chip active" data-filter="all">All</button>
       <button class="chip" data-filter="selected">Selected</button>
@@ -148,7 +234,7 @@ kbd{background:var(--raise);border:1px solid var(--line);border-bottom-width:2px
   </section>
 
   <!-- ================= FACES ================= -->
-  <section id="tab-faces" style="display:none">
+  <section id="tab-faces">
     <div class="panel">
       <h2>1 · Build the face index</h2>
       <p>Scans every photo once for faces, on your machine. You can pause anytime; it resumes where it left off. New photos only need the new ones scanned.</p>
@@ -182,7 +268,7 @@ kbd{background:var(--raise);border:1px solid var(--line);border-bottom-width:2px
   </section>
 
   <!-- ================= SETTINGS ================= -->
-  <section id="tab-settings" style="display:none">
+  <section id="tab-settings">
     <div class="panel">
       <h2>Folders</h2>
       <p id="firstRunNote" style="display:none">Welcome! Before anything else, tell the tool where your photos live and where selected photos should be copied.</p>
@@ -200,6 +286,34 @@ kbd{background:var(--raise);border:1px solid var(--line);border-bottom-width:2px
       </div>
       <button class="btn gold" id="saveSettings">Save folders</button>
       <span class="hint" id="heicNote" style="margin-left:12px"></span>
+    </div>
+  </section>
+
+  <!-- ================= ABOUT ================= -->
+  <section id="tab-about">
+    <div class="panel about-panel">
+      <div class="about-photo">
+        <img src="/static/img/about.jpg" alt="Saurav & Shipra">
+      </div>
+      <div class="about-info">
+        <h2>Saurav &amp; Shipra</h2>
+        <p>Thanks for using our little tool to help sort through the big day.</p>
+        <ul class="about-links">
+          <li><a href="mailto:sauravsingh243@gmail.com">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+            sauravsingh243@gmail.com
+          </a></li>
+          <li><a href="https://instagram.com/saurav_and_shipra" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            @saurav_and_shipra
+          </a></li>
+          <li><a href="https://github.com/sauravsingh243" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.57.11.78-.25.78-.55 0-.27-.01-1.16-.02-2.11-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.05 11.05 0 0 1 5.79 0c2.2-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.08 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.15 0 1.55-.01 2.8-.01 3.18 0 .3.2.66.79.55A11.5 11.5 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/></svg>
+            sauravsingh243
+          </a></li>
+        </ul>
+        <p class="about-footer">Built with love by Saurav &amp; Shipra</p>
+      </div>
     </div>
   </section>
 </main>
