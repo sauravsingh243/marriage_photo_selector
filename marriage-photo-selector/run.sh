@@ -9,3 +9,6 @@ if [ ! -d ".venv" ]; then
 fi
 open -g "http://127.0.0.1:8759" 2>/dev/null || true
 exec ./.venv/bin/python app.py
+
+# lsof -i :8759
+# kill -9 8759
